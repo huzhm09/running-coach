@@ -1,377 +1,215 @@
 import React, { useState } from 'react';
-import { Button, Card } from 'antd-mobile';
-import {
-  LeftOutlined,
-  RightOutlined,
-  SmileOutlined,
-  ThunderboltOutlined,
-  HeartOutlined,
-  DashboardOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  DownOutlined,
-  UpOutlined,
-} from '@ant-design/icons';
-import RPEDots from '../components/RPEDots';
-import { useTrainingStore, TRAINING_TYPES, DAY_LABELS } from '../stores/trainingStore';
+import { Button } from 'antd-mobile';
+import { LeftOutlined, RightOutlined, CheckOutlined, CheckCircleOutlined, EditOutlined, FireOutlined, ThunderboltOutlined, DashboardOutlined, SmileOutlined, CoffeeOutlined, CompassOutlined, HeartOutlined, AimOutlined } from '@ant-design/icons';
+import { TRAINING_TYPES, DAY_LABELS, WEEK_SCHEDULE } from '../stores/trainingStore';
 
-const ORANGE = '#FF6B35';
-const LIGHT_GRAY = '#F5F5F5';
-const GREEN = '#4CAF50';
-
-const weekGoalStyle: React.CSSProperties = {
-  background: `linear-gradient(135deg, ${ORANGE}, #FF9A5C)`,
-  borderRadius: 16,
-  padding: 20,
-  color: '#fff',
-  marginBottom: 16,
+const C = {
+  primary: '#FF6B35', primaryHover: '#E85A2A', primaryLight: '#FFF0E8',
+  text: '#3C2218', textSec: '#8B7355', textTer: '#C4A882',
+  border: '#F0E6D8', borderLight: '#F8F2EC',
+  surface: '#FFFFFF', green: '#4CAF50', warmBg: '#FFF9F5',
 };
 
-const weekSwitcherStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 16,
-  marginBottom: 16,
+const iconNode: Record<string, any> = {
+  smile: <SmileOutlined />, coffee: <CoffeeOutlined />, thunderbolt: <ThunderboltOutlined />,
+  dashboard: <DashboardOutlined />, compass: <CompassOutlined />, heart: <HeartOutlined />,
 };
 
-const weekNumberStyle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  color: '#333',
-};
-
-const modeBadgeStyle: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '2px 10px',
-  borderRadius: 10,
-  backgroundColor: 'rgba(255,255,255,0.3)',
-  fontSize: 12,
-  marginBottom: 8,
-};
-
-const dayCardStyle: React.CSSProperties = {
-  marginBottom: 10,
-  borderRadius: 12,
-  overflow: 'hidden',
-  border: 'none',
-};
-
-const dayHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '12px 0',
-};
-
-const dayBadgeStyle = (type: string, completed: boolean): React.CSSProperties => ({
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 18,
-  color: '#fff',
-  backgroundColor: completed ? GREEN : (TRAINING_TYPES[type]?.color || ORANGE),
-  flexShrink: 0,
-});
-
-const dayNameStyle: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 600,
-  color: '#333',
-  flex: 1,
-};
-
-const dayStatsStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: '#999',
-  display: 'flex',
-  gap: 8,
-};
-
-const expandBtnStyle: React.CSSProperties = {
-  color: ORANGE,
-  fontSize: 12,
-  marginLeft: 8,
-};
-
-// Timeline in detail
-const timelineLineStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: 12,
-  top: 28,
-  bottom: 28,
-  width: 2,
-  backgroundColor: '#E0E0E0',
-};
-
-const detailSectionStyle: React.CSSProperties = {
-  marginTop: 12,
-  paddingTop: 12,
-  borderTop: '1px solid #F0F0F0',
-};
-
-const statsGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
-  gap: 8,
-  marginTop: 8,
-};
-
-const statGridItemStyle: React.CSSProperties = {
-  textAlign: 'center',
-  padding: 8,
-  backgroundColor: LIGHT_GRAY,
-  borderRadius: 8,
-};
-
-const getTrainingIcon = (type: string): React.ReactNode => {
-  switch (type) {
-    case 'easy-run':
-      return <SmileOutlined />;
-    case 'interval':
-      return <ThunderboltOutlined />;
-    case 'tempo':
-      return <DashboardOutlined />;
-    case 'lsd':
-      return <SmileOutlined />;
-    case 'recovery':
-      return <HeartOutlined />;
-    default:
-      return <ClockCircleOutlined />;
-  }
-};
-
-const TRAINING_PURPOSE: Record<string, string> = {
-  'easy-run': '保持有氧基础，提升脂肪供能效率，促进恢复',
-  'rest': '完全休息，让身体充分恢复',
-  'interval': '提升最大摄氧量和速度耐力',
-  'tempo': '提升乳酸阈值，提高配速耐力',
-  'lsd': '增强心肺耐力，提升长时间运动能力',
-  'recovery': '主动恢复，促进血液循环，缓解肌肉酸痛',
+const purposeText: Record<string, string> = {
+  'easy-run': '保持有氧基础，促进恢复，为高强度训练储备体能',
+  'interval': '提升最大摄氧量和速度耐力，突破配速瓶颈',
+  'tempo': '提高乳酸阈值，让你在比赛配速下更持久',
+  'lsd': '建立有氧耐力基础，提升脂肪供能效率',
+  'recovery': '主动恢复，促进血液循环，加速肌肉修复',
+  'rest': '让身体充分休息，迎接接下来的训练挑战',
 };
 
 const PlanPage: React.FC = () => {
-  const { currentWeek, setCurrentWeek, weeks } = useTrainingStore();
-  const weekData = weeks[currentWeek] || [];
-  const totalWeeks = weeks.length;
-  const completedDays = weekData.filter((d) => d.completed).length;
-  const weekGoal = '完成本周全部训练，稳步提升';
-
+  const [currentWeek, setCurrentWeek] = useState(3);
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
-
-  const toggleExpand = (dayIdx: number) => {
-    setExpandedDay((prev) => (prev === dayIdx ? null : dayIdx));
-  };
-
-  const goPrevWeek = () => {
-    if (currentWeek > 0) setCurrentWeek(currentWeek - 1);
-  };
-
-  const goNextWeek = () => {
-    if (currentWeek < totalWeeks - 1) setCurrentWeek(currentWeek + 1);
-  };
+  const totalWeeks = 12;
 
   return (
-    <div style={{ padding: 16 }}>
-      {/* ── Header ── */}
-      <div style={weekGoalStyle}>
-        <div style={modeBadgeStyle}>健康提升</div>
-        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-          第 {currentWeek + 1} 周训练计划
+    <div style={{ padding: 16, paddingBottom: 8 }}>
+      {currentWeek === 3 && (
+        <div style={{ background: C.primaryLight, borderRadius: 16, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: C.text, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.5 }}>
+          ↻ 根据你上周的训练完成情况，本周三的间歇跑已降低一组。
         </div>
-        <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 12 }}>
-          {weekGoal}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3 }}>
-            <div
-              style={{
-                width: `${(completedDays / 7) * 100}%`,
-                height: '100%',
-                backgroundColor: '#fff',
-                borderRadius: 3,
-                transition: 'width 0.3s',
-              }}
-            />
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>
-            {completedDays}/7
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* ── Week Switcher ── */}
-      <div style={weekSwitcherStyle}>
-        <Button
-          fill="none"
-          size="small"
-          style={{ color: currentWeek === 0 ? '#D0D0D0' : ORANGE }}
-          onClick={goPrevWeek}
-          disabled={currentWeek === 0}
-        >
-          <LeftOutlined />
-        </Button>
-        <div style={weekNumberStyle}>
-          第 {currentWeek + 1} / {totalWeeks} 周
-        </div>
-        <Button
-          fill="none"
-          size="small"
-          style={{ color: currentWeek >= totalWeeks - 1 ? '#D0D0D0' : ORANGE }}
-          onClick={goNextWeek}
-          disabled={currentWeek >= totalWeeks - 1}
-        >
-          <RightOutlined />
-        </Button>
-      </div>
-
-      {/* ── Day Cards ── */}
-      {weekData.map((day, idx) => {
-        const isExpanded = expandedDay === idx;
-        const typeInfo = TRAINING_TYPES[day.type];
-        const typeColor = typeInfo?.color || ORANGE;
-
-        return (
-          <Card
-            key={idx}
-            style={{
-              ...dayCardStyle,
-              borderLeft: `4px solid ${day.completed ? GREEN : typeColor}`,
-            }}
-            onClick={() => toggleExpand(idx)}
-          >
-            <div style={dayHeaderStyle}>
-              <div style={dayBadgeStyle(day.type, day.completed)}>
-                {day.completed ? <CheckCircleOutlined /> : getTrainingIcon(day.type)}
-              </div>
-              <div style={dayNameStyle}>
-                {DAY_LABELS[idx]}
-                <div style={{ fontSize: 12, color: typeColor, fontWeight: 400 }}>
-                  {typeInfo?.label || day.type}
-                </div>
-              </div>
-              <div style={dayStatsStyle}>
-                {day.distance > 0 && <span>{day.distance}km</span>}
-                {day.duration > 0 && <span>{day.duration}min</span>}
-              </div>
-              <div style={expandBtnStyle}>
-                {isExpanded ? <UpOutlined /> : <DownOutlined />}
-              </div>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ padding: '4px 12px', borderRadius: 20, background: C.primaryLight, color: C.primary, fontSize: 12, fontWeight: 600 }}>备赛模式 · 半马</span>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 12, color: C.textSec, marginBottom: 4 }}>第 {currentWeek} 周 / 共 {totalWeeks} 周</div>
+            <div style={{ width: 80, height: 4, background: C.borderLight, borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${(currentWeek / totalWeeks) * 100}%`, background: `linear-gradient(90deg,${C.primary},${C.primaryHover})`, borderRadius: 2 }} />
             </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 13, color: C.textSec }}>🎯 目标完赛: 2:00:00</div>
+      </div>
 
-            {isExpanded && (
-              <div style={detailSectionStyle}>
-                {/* Purpose */}
-                <div style={{ fontSize: 13, color: '#555', marginBottom: 12, lineHeight: 1.6 }}>
-                  {TRAINING_PURPOSE[day.type] || '完成今日训练'}
-                </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <button onClick={() => setCurrentWeek(w => Math.max(1, w - 1))} disabled={currentWeek <= 1}
+          style={{ width: 28, height: 28, borderRadius: '50%', border: `1px solid ${C.border}`, background: C.surface, cursor: 'pointer', color: currentWeek <= 1 ? C.textTer : C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', fontSize: 18 }}>
+          <LeftOutlined />
+        </button>
+        <div style={{ display: 'flex', gap: 4, flex: 1, overflow: 'auto', scrollbarWidth: 'none', padding: '4px 0' }}>
+          {Array.from({ length: totalWeeks }, (_, i) => {
+            const w = i + 1;
+            return (
+              <button key={w} onClick={() => setCurrentWeek(w)}
+                style={{ padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: w === currentWeek ? 700 : 500, background: w === currentWeek ? C.primary : 'transparent', color: w === currentWeek ? '#fff' : C.textSec, whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'inherit' }}>
+                第{w}周
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => setCurrentWeek(w => Math.min(totalWeeks, w + 1))} disabled={currentWeek >= totalWeeks}
+          style={{ width: 28, height: 28, borderRadius: '50%', border: `1px solid ${C.border}`, background: C.surface, cursor: 'pointer', color: currentWeek >= totalWeeks ? C.textTer : C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', fontSize: 18 }}>
+          <RightOutlined />
+        </button>
+      </div>
 
-                {/* Timeline */}
-                <div style={{ position: 'relative', paddingLeft: 28, marginBottom: 12 }}>
-                  <div style={timelineLineStyle} />
-                  <div style={{ paddingBottom: 12, position: 'relative' }}>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: -20,
-                        top: 2,
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: '#4CAF50',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 10,
-                        color: '#fff',
-                      }}
-                    >
-                      1
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>热身</div>
-                    <div style={{ fontSize: 12, color: '#777' }}>{day.warmup || '慢跑 10min + 动态拉伸'}</div>
-                  </div>
-                  <div style={{ paddingBottom: 12, position: 'relative' }}>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: -20,
-                        top: 2,
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: ORANGE,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 10,
-                        color: '#fff',
-                      }}
-                    >
-                      2
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>主课</div>
-                    <div style={{ fontSize: 12, color: '#777' }}>{day.main}</div>
-                  </div>
-                  <div style={{ position: 'relative' }}>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: -20,
-                        top: 2,
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: '#42A5F5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 10,
-                        color: '#fff',
-                      }}
-                    >
-                      3
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#333' }}>放松</div>
-                    <div style={{ fontSize: 12, color: '#777' }}>{day.cooldown || '慢跑 + 静态拉伸'}</div>
-                  </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {WEEK_SCHEDULE.map((day, i) => {
+          const t = TRAINING_TYPES[day.type];
+          const isExpanded = expandedDay === i;
+          return (
+            <div key={i} style={{
+              background: C.surface, borderRadius: 16, padding: 0, overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(60,34,24,0.04), 0 2px 8px rgba(60,34,24,0.06)',
+              border: `${isExpanded ? 1.5 : 0.5}px solid ${isExpanded ? C.primaryLight : 'rgba(0,0,0,0.04)'}`,
+              transition: 'border 0.2s',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', cursor: 'pointer' }}
+                onClick={() => setExpandedDay(isExpanded ? null : i)}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36, marginRight: 10 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{DAY_LABELS[i]}</span>
+                  <span style={{ fontSize: 10, color: C.textTer, marginTop: 1 }}>7/{22 + i}</span>
                 </div>
-
-                {/* HR + Feel + Stats */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                  <div style={{ flex: 1, fontSize: 13, color: '#666' }}>
-                    <div style={{ fontWeight: 500, color: '#333', marginBottom: 4 }}>心率区间</div>
-                    <div>Z2 (130-145)</div>
-                  </div>
-                  <div style={{ flex: 1, fontSize: 13, color: '#666' }}>
-                    <div style={{ fontWeight: 500, color: '#333', marginBottom: 4 }}>主观感受 RPE</div>
-                    <RPEDots value={day.rpe} max={10} size={14} />
-                  </div>
+                <span style={{ fontSize: 20, marginRight: 10, color: t.color }}>{iconNode[t.icon] || <AimOutlined />}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.label}</div>
+                  {day.distance > 0 && <div style={{ fontSize: 11, color: C.textSec, marginTop: 1 }}>{day.distance}km · {day.duration}min</div>}
                 </div>
-
-                {/* Stats Grid */}
-                <div style={statsGridStyle}>
-                  <div style={statGridItemStyle}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: ORANGE }}>{day.distance}</div>
-                    <div style={{ fontSize: 11, color: '#999' }}>km</div>
+                {day.completed && (
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}>
+                    <CheckOutlined style={{ fontSize: 14, color: '#fff' }} />
                   </div>
-                  <div style={statGridItemStyle}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: ORANGE }}>{day.duration}</div>
-                    <div style={{ fontSize: 11, color: '#999' }}>分钟</div>
-                  </div>
-                  <div style={statGridItemStyle}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: ORANGE }}>RPE {day.rpe}</div>
-                    <div style={{ fontSize: 11, color: '#999' }}>强度</div>
-                  </div>
-                </div>
+                )}
+                <RightOutlined style={{ fontSize: 18, color: C.textTer, transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }} />
               </div>
-            )}
-          </Card>
-        );
-      })}
+
+              {isExpanded && (
+                <div style={{ padding: '14px', borderTop: `0.5px solid ${C.borderLight}`, background: C.warmBg }}>
+                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.textTer, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>训练目标</div>
+                    <p style={{ fontSize: 13, color: C.textSec, lineHeight: 1.6, margin: 0, maxWidth: 280, marginInline: 'auto' }}>{purposeText[day.type]}</p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 16 }}>
+                    {day.warmup && (
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 28, flexShrink: 0 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#FFF3E0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FireOutlined style={{ fontSize: 14, color: '#FF9800' }} />
+                          </div>
+                          <div style={{ width: 1.5, flex: 1, background: C.borderLight, minHeight: 16 }} />
+                        </div>
+                        <div style={{ flex: 1, paddingBottom: 12 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>热身</div>
+                          <div style={{ fontSize: 12, color: C.textSec, lineHeight: 1.5 }}>{day.warmup}</div>
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 28, flexShrink: 0 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <ThunderboltOutlined style={{ fontSize: 14, color: C.primary }} />
+                        </div>
+                        {day.cooldown && <div style={{ width: 1.5, flex: 1, background: C.borderLight, minHeight: 16 }} />}
+                      </div>
+                      <div style={{ flex: 1, paddingBottom: day.cooldown ? 12 : 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 6 }}>主课</div>
+                        <div style={{ background: C.surface, borderRadius: 10, padding: '12px 14px', border: `0.5px solid ${C.borderLight}` }}>
+                          <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, fontWeight: 500 }}>{day.main}</div>
+                          {day.distance > 0 && (
+                            <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: `0.5px solid ${C.borderLight}` }}>
+                              <div style={{ flex: 1, textAlign: 'center' }}><div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{day.distance}</div><div style={{ fontSize: 10, color: C.textTer }}>公里</div></div>
+                              <div style={{ flex: 1, textAlign: 'center' }}><div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{day.duration}</div><div style={{ fontSize: 10, color: C.textTer }}>分钟</div></div>
+                              <div style={{ flex: 1, textAlign: 'center' }}><div style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>{day.rpe}/10</div><div style={{ fontSize: 10, color: C.textTer }}>RPE</div></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {day.cooldown && (
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <DashboardOutlined style={{ fontSize: 14, color: '#4CAF50' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>放松</div>
+                          <div style={{ fontSize: 12, color: C.textSec, lineHeight: 1.5 }}>{day.cooldown}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {day.distance > 0 && (
+                    <div style={{ marginBottom: 16, background: C.surface, borderRadius: 10, padding: 12, border: `0.5px solid ${C.borderLight}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.textSec, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>♥ 心率区间</div>
+                      <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', gap: 2, marginBottom: 8 }}>
+                        <div style={{ flex: 1, background: '#E3F2FD' }} />
+                        <div style={{ flex: 1, background: '#BBDEFB' }} />
+                        <div style={{ flex: 1.5, background: day.type === 'tempo' || day.type === 'interval' ? '#64B5F6' : '#E8E8E8', borderRadius: 2 }} />
+                        <div style={{ flex: 1, background: day.type === 'interval' ? '#FFA726' : '#E8E8E8' }} />
+                        <div style={{ flex: 0.5, background: '#E8E8E8' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: C.textTer }}><span>Z1</span><span>Z2</span><span>Z3</span><span>Z4</span><span>Z5</span></div>
+                      <div style={{ marginTop: 8, fontSize: 11, color: C.textSec }}>
+                        <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: day.type === 'interval' ? '#FFA726' : '#64B5F6', marginRight: 6, verticalAlign: -1 }} />
+                        目标：{day.type === 'easy-run' || day.type === 'lsd' ? 'Z2 有氧耐力区 (130-145 bpm)' : day.type === 'tempo' ? 'Z3 乳酸阈区 (155-168 bpm)' : day.type === 'interval' ? 'Z4 最大摄氧量区 (170-185 bpm)' : 'Z1-Z2 恢复区'}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: C.surface, borderRadius: 10, border: `0.5px solid ${C.borderLight}` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <DashboardOutlined style={{ fontSize: 18, color: C.primary }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.textSec, marginBottom: 2 }}>体感强度</div>
+                      <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4 }}>
+                        {day.rpe <= 3 ? '非常轻松，可以边跑边聊天' : day.rpe <= 5 ? '舒适努力，呼吸稍快但可持续' : day.rpe <= 7 ? '有些吃力，只能短句交流' : '非常困难，全力以赴'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {day.completed ? (
+                      <Button color="success" fill="solid" block style={{ flex: 1, borderRadius: 12, fontWeight: 600 }}>
+                        <CheckOutlined style={{ marginRight: 6 }} /> 训练已完成
+                      </Button>
+                    ) : (
+                      <Button color="primary" fill="solid" block style={{ flex: 1, borderRadius: 12, fontWeight: 600, background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none' }}>
+                        <CheckCircleOutlined style={{ marginRight: 6 }} /> 开始训练
+                      </Button>
+                    )}
+                    <Button fill="outline" style={{ borderColor: C.border, color: C.textSec, borderRadius: 12 }}>
+                      <EditOutlined style={{ marginRight: 6 }} />调整
+                    </Button>
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: 6, fontSize: 11, color: C.textTer, cursor: 'pointer' }}
+                    onClick={() => setExpandedDay(null)}>收起 ▲</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

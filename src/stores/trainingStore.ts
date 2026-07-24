@@ -43,6 +43,10 @@ export const DEFAULT_RECORDS: RunningRecord[] = [
 
 export const WEEKLY_CHART = [8.2, 0, 5.8, 6.1, 0, 0, 3.1];
 export const PACE_TREND = ['6\'30"', '6\'15"', '6\'08"', '5\'56"'];
+export const WEEK_SCHEDULE = DEFAULT_WEEK;
+export const RECORDS = DEFAULT_RECORDS;
+export const ASSESSMENT = DEFAULT_ASSESSMENT;
+export const DISTANCE_OPTIONS = ['5K', '10K', '半马', '全马'];
 
 // ── Store ──
 interface TrainingState {

@@ -1,628 +1,181 @@
-import React, { useState } from 'react';
-import { Button, Stepper, Slider, Input, Toast } from 'antd-mobile';
-import {
-  UploadOutlined,
-  CameraOutlined,
-  PictureOutlined,
-  CheckOutlined,
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-} from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Button, Popup, Input, Slider } from 'antd-mobile';
+import { CameraOutlined, PictureOutlined, LeftOutlined, EditOutlined, StarOutlined, TrophyOutlined, RiseOutlined } from '@ant-design/icons';
 import RadarChart from '../components/RadarChart';
-import { DEFAULT_ASSESSMENT } from '../stores/trainingStore';
-import type { OCRResult } from '../types';
+import { DEFAULT_ASSESSMENT, DISTANCE_OPTIONS } from '../stores/trainingStore';
 
-interface OnboardingFlowProps {
-  currentStep: number;
-  setCurrentStep: (step: number) => void;
-  onComplete: () => void;
+const C = {
+  primary: '#FF6B35', primaryHover: '#E85A2A', primaryLight: '#FFF0E8',
+  text: '#3C2218', textSec: '#8B7355', textTer: '#C4A882',
+  border: '#F0E6D8', borderLight: '#F8F2EC', surface: '#FFFFFF',
+};
+
+const DAY_NAMES = ['一', '二', '三', '四', '五', '六', '日'];
+
+interface Props {
+  step: number;
+  setStep: (s: number) => void;
   onClose: () => void;
+  onFinish: () => void;
 }
 
-const ORANGE = '#FF6B35';
-const LIGHT_GRAY = '#F5F5F5';
-
-const contentStyle: React.CSSProperties = {
-  padding: 24,
-  maxHeight: '80vh',
-  overflowY: 'auto',
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: 22,
-  fontWeight: 700,
-  textAlign: 'center',
-  marginBottom: 8,
-  color: '#333',
-};
-
-const subtitleStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: '#999',
-  textAlign: 'center',
-  marginBottom: 24,
-};
-
-const stepIndicatorStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'center',
-  gap: 8,
-  marginBottom: 24,
-};
-
-const stepDotStyle: React.CSSProperties = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: '#E0E0E0',
-  transition: 'all 0.3s',
-};
-
-const stepDotActiveStyle: React.CSSProperties = {
-  ...stepDotStyle,
-  width: 24,
-  backgroundColor: ORANGE,
-};
-
-const uploadAreaStyle: React.CSSProperties = {
-  border: `2px dashed ${ORANGE}`,
-  borderRadius: 16,
-  padding: 40,
-  textAlign: 'center',
-  backgroundColor: 'rgba(255, 107, 53, 0.05)',
-  marginBottom: 16,
-};
-
-const uploadIconStyle: React.CSSProperties = {
-  fontSize: 48,
-  color: ORANGE,
-  marginBottom: 12,
-};
-
-const thumbnailRowStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: 12,
-  justifyContent: 'center',
-  marginTop: 16,
-};
-
-const thumbnailStyle: React.CSSProperties = {
-  width: 64,
-  height: 64,
-  borderRadius: 8,
-  backgroundColor: '#E0E0E0',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 20,
-  color: '#999',
-};
-
-const fieldRowStyle: React.CSSProperties = {
-  marginBottom: 16,
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: '#666',
-  marginBottom: 4,
-  fontWeight: 500,
-};
-
-const loadingContainerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '60px 0',
-};
-
-const spinnerStyle: React.CSSProperties = {
-  width: 48,
-  height: 48,
-  border: `4px solid ${LIGHT_GRAY}`,
-  borderTopColor: ORANGE,
-  borderRadius: '50%',
-  animation: 'spin 1s linear infinite',
-  marginBottom: 20,
-};
-
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  color: '#333',
-  marginBottom: 12,
-  marginTop: 20,
-};
-
-const modeToggleStyle: React.CSSProperties = {
-  display: 'flex',
-  borderRadius: 8,
-  overflow: 'hidden',
-  border: `1px solid ${ORANGE}`,
-  marginBottom: 16,
-};
-
-const modeOptionStyle: React.CSSProperties = {
-  flex: 1,
-  textAlign: 'center',
-  padding: '10px 0',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 0.2s',
-};
-
-const mockOCRResult: OCRResult = {
-  recent5k: '23:45',
-  avgPace: '5\'12"/km',
-  avgHeartRate: '152',
-  monthlyMileage: '180',
-  runTypes: ['轻松跑', '间歇跑', '节奏跑'],
-  runningYears: '2',
-};
-
-const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-
-const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
-  currentStep,
-  setCurrentStep,
-  onComplete,
-}) => {
-  const [ocrResult, setOcrResult] = useState<OCRResult>(mockOCRResult);
-  const [mode, setMode] = useState<'race' | 'improve'>('improve');
-  const [goalDistance, setGoalDistance] = useState('');
-  const [goalTime, setGoalTime] = useState('');
+const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) => {
+  const [mode, setMode] = useState<'race' | 'improve'>('race');
+  const [goalDist, setGoalDist] = useState('半马');
+  const [goalTime, setGoalTime] = useState('2:00:00');
   const [weeklyDays, setWeeklyDays] = useState(4);
-  const [maxDuration, setMaxDuration] = useState(60);
   const [intensity, setIntensity] = useState(50);
-  const [restDays, setRestDays] = useState<number[]>([1, 4]);
-  const [injuries, setInjuries] = useState('');
+  const [restDays, setRestDays] = useState<number[]>([1, 3, 5]); // 二四六
 
-  const toggleRestDay = (day: number) => {
-    setRestDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+  useEffect(() => { if (step === 3) { const t = setTimeout(() => setStep(4), 3000); return () => clearTimeout(t); } }, [step]);
+
+  const nextStep = () => setStep(step + 1);
+
+  const toggleRestDay = (d: number) => {
+    setRestDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
+  };
+
+  if (step === 3) {
+    return (
+      <Popup visible bodyStyle={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: 40 }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'pulse 1.5s ease-in-out infinite' }}>
+          <RiseOutlined style={{ fontSize: 36, color: C.primary }} />
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>AI 正在分析你的跑步能力...</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: C.primary, animation: `dotFade 0.6s ${i * 0.15}s ease-in-out infinite` }} />)}
+        </div>
+        <style>{`@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}@keyframes dotFade{0%,100%{opacity:0.3}50%{opacity:1}}`}</style>
+      </Popup>
     );
-  };
-
-  const renderStepIndicator = () => (
-    <div style={stepIndicatorStyle}>
-      {[1, 2, 3, 4, 5].map((s) => (
-        <div
-          key={s}
-          style={s === currentStep ? stepDotActiveStyle : stepDotStyle}
-        />
-      ))}
-    </div>
-  );
-
-  const renderStep1Upload = () => (
-    <div>
-      <div style={titleStyle}>上传跑步记录截图</div>
-      <div style={subtitleStyle}>从跑步APP截图中导入数据，快速生成训练计划</div>
-
-      <div style={uploadAreaStyle}>
-        <div style={uploadIconStyle}>
-          <UploadOutlined />
-        </div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 8 }}>
-          点击上传截图
-        </div>
-        <div style={{ fontSize: 13, color: '#999', marginBottom: 16 }}>
-          支持 JPG / PNG 格式
-        </div>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Button
-            color="primary"
-            fill="solid"
-            size="small"
-            style={{ backgroundColor: ORANGE, borderColor: ORANGE }}
-          >
-            <CameraOutlined /> 拍照
-          </Button>
-          <Button
-            color="primary"
-            fill="none"
-            size="small"
-            style={{ color: ORANGE, borderColor: ORANGE }}
-          >
-            <PictureOutlined /> 相册
-          </Button>
-        </div>
-      </div>
-
-      <div style={subtitleStyle}>或选择模拟数据</div>
-      <div style={thumbnailRowStyle}>
-        <div style={thumbnailStyle}>🏃</div>
-        <div style={thumbnailStyle}>📊</div>
-        <div style={thumbnailStyle}>📱</div>
-      </div>
-    </div>
-  );
-
-  const renderStep2Recognition = () => (
-    <div>
-      <div style={titleStyle}>确认识别结果</div>
-      <div style={subtitleStyle}>AI已从截图中识别出以下数据，请确认或修改</div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>最近5公里成绩</div>
-        <Input
-          value={ocrResult.recent5k}
-          onChange={(v) => setOcrResult((prev) => ({ ...prev, recent5k: v }))}
-          placeholder="例如 23:45"
-        />
-      </div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>平均配速</div>
-        <Input
-          value={ocrResult.avgPace}
-          onChange={(v) => setOcrResult((prev) => ({ ...prev, avgPace: v }))}
-          placeholder="例如 5'12/km"
-        />
-      </div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>平均心率</div>
-        <Input
-          value={ocrResult.avgHeartRate}
-          onChange={(v) => setOcrResult((prev) => ({ ...prev, avgHeartRate: v }))}
-          placeholder="例如 152"
-        />
-      </div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>月跑量 (km)</div>
-        <Input
-          value={ocrResult.monthlyMileage}
-          onChange={(v) => setOcrResult((prev) => ({ ...prev, monthlyMileage: v }))}
-          placeholder="例如 180"
-        />
-      </div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>跑步年限</div>
-        <Input
-          value={ocrResult.runningYears}
-          onChange={(v) => setOcrResult((prev) => ({ ...prev, runningYears: v }))}
-          placeholder="例如 2"
-        />
-      </div>
-
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>偏好跑步类型</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {ocrResult.runTypes.map((t, i) => (
-            <div
-              key={i}
-              style={{
-                padding: '4px 12px',
-                borderRadius: 12,
-                backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                color: ORANGE,
-                fontSize: 13,
-              }}
-            >
-              {t}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep3Analyzing = () => (
-    <div>
-      <div style={titleStyle}>AI 分析中</div>
-      <div style={subtitleStyle}>正在评估你的跑步能力并生成训练计划...</div>
-
-      <div style={loadingContainerStyle}>
-        <div style={spinnerStyle} />
-        <div style={{ fontSize: 15, color: '#666', marginBottom: 8 }}>分析跑步数据中...</div>
-        <div style={{ fontSize: 13, color: '#999' }}>请稍候，这需要几秒钟</div>
-      </div>
-
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 12,
-          backgroundColor: LIGHT_GRAY,
-        }}
-      >
-        <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>分析步骤</div>
-        {['解析跑步截图', '评估能力维度', '生成训练计划', '优化训练安排'].map(
-          (step, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 0',
-                fontSize: 13,
-                color: i < 2 ? ORANGE : '#999',
-              }}
-            >
-              <div
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  backgroundColor: i < 2 ? ORANGE : '#E0E0E0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontSize: 11,
-                  fontWeight: 600,
-                }}
-              >
-                {i < 2 ? <CheckOutlined /> : i + 1}
-              </div>
-              <span>{step}</span>
-            </div>
-          )
-        )}
-      </div>
-    </div>
-  );
-
-  const renderStep4Assessment = () => (
-    <div>
-      <div style={titleStyle}>能力评估结果</div>
-      <div style={subtitleStyle}>基于你的跑步数据，AI对你的能力评估如下</div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-        <RadarChart data={DEFAULT_ASSESSMENT} size={200} />
-      </div>
-
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 12,
-          backgroundColor: LIGHT_GRAY,
-          fontSize: 14,
-          color: '#555',
-          lineHeight: 1.6,
-        }}
-      >
-        {DEFAULT_ASSESSMENT.summary}
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 12,
-          marginTop: 16,
-        }}
-      >
-        {[
-          { label: '耐力', value: DEFAULT_ASSESSMENT.endurance, color: '#4CAF50' },
-          { label: '速度', value: DEFAULT_ASSESSMENT.speed, color: '#FFA726' },
-          { label: '力量', value: DEFAULT_ASSESSMENT.strength, color: '#42A5F5' },
-          { label: '恢复', value: DEFAULT_ASSESSMENT.recovery, color: '#7E57C2' },
-          { label: '跑量', value: DEFAULT_ASSESSMENT.mileage, color: '#EC407A' },
-        ].map((item) => (
-          <div
-            key={item.label}
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              backgroundColor: '#fff',
-              border: '1px solid #F0F0F0',
-            }}
-          >
-            <div style={{ fontSize: 12, color: '#999', marginBottom: 2 }}>
-              {item.label}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: item.color }}>
-              {item.value}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderStep5Preferences = () => (
-    <div>
-      <div style={titleStyle}>训练偏好设置</div>
-      <div style={subtitleStyle}>配置你的训练目标和偏好，AI将据此生成个性化计划</div>
-
-      <div style={sectionTitleStyle}>训练模式</div>
-      <div style={modeToggleStyle}>
-        <div
-          style={{
-            ...modeOptionStyle,
-            backgroundColor: mode === 'race' ? ORANGE : '#fff',
-            color: mode === 'race' ? '#fff' : '#666',
-          }}
-          onClick={() => setMode('race')}
-        >
-          比赛模式
-        </div>
-        <div
-          style={{
-            ...modeOptionStyle,
-            backgroundColor: mode === 'improve' ? ORANGE : '#fff',
-            color: mode === 'improve' ? '#fff' : '#666',
-          }}
-          onClick={() => setMode('improve')}
-        >
-          健康提升
-        </div>
-      </div>
-
-      <div style={sectionTitleStyle}>目标距离 (km)</div>
-      <Input
-        value={goalDistance}
-        onChange={setGoalDistance}
-        placeholder="例如 21.0975（半马）"
-      />
-
-      <div style={{ ...sectionTitleStyle, marginTop: 20 }}>目标完赛时间</div>
-      <Input
-        value={goalTime}
-        onChange={setGoalTime}
-        placeholder="例如 1:45:00"
-      />
-
-      <div style={sectionTitleStyle}>每周训练天数</div>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-        <Stepper
-          value={weeklyDays}
-          onChange={setWeeklyDays}
-          min={2}
-          max={7}
-        />
-      </div>
-
-      <div style={sectionTitleStyle}>单次最长训练 (分钟)</div>
-      <div style={{ padding: '0 8px' }}>
-        <Slider
-          value={maxDuration}
-          onChange={(v) => setMaxDuration(v as number)}
-          min={30}
-          max={180}
-          step={10}
-          ticks={true}
-        />
-        <div style={{ textAlign: 'center', fontSize: 14, color: ORANGE, fontWeight: 600 }}>
-          {maxDuration} 分钟
-        </div>
-      </div>
-
-      <div style={sectionTitleStyle}>训练强度</div>
-      <div style={{ padding: '0 8px' }}>
-        <Slider
-          value={intensity}
-          onChange={(v) => setIntensity(v as number)}
-          min={0}
-          max={100}
-          step={5}
-          ticks={true}
-        />
-        <div style={{ textAlign: 'center', fontSize: 14, color: ORANGE, fontWeight: 600 }}>
-          {intensity < 30 ? '低' : intensity < 70 ? '中' : '高'}
-        </div>
-      </div>
-
-      <div style={sectionTitleStyle}>休息日</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {WEEKDAYS.map((day, i) => (
-          <div
-            key={i}
-            onClick={() => toggleRestDay(i)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 16,
-              backgroundColor: restDays.includes(i)
-                ? 'rgba(255, 107, 53, 0.1)'
-                : LIGHT_GRAY,
-              color: restDays.includes(i) ? ORANGE : '#666',
-              fontSize: 13,
-              fontWeight: restDays.includes(i) ? 600 : 400,
-              cursor: 'pointer',
-              border: restDays.includes(i)
-                ? `1px solid ${ORANGE}`
-                : '1px solid #E0E0E0',
-              transition: 'all 0.2s',
-            }}
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div style={sectionTitleStyle}>伤病史 (可选)</div>
-      <Input
-        value={injuries}
-        onChange={setInjuries}
-        placeholder="例如：膝盖不适、足底筋膜炎..."
-      />
-    </div>
-  );
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return renderStep1Upload();
-      case 2:
-        return renderStep2Recognition();
-      case 3:
-        return renderStep3Analyzing();
-      case 4:
-        return renderStep4Assessment();
-      case 5:
-        return renderStep5Preferences();
-      default:
-        return null;
-    }
-  };
-
-  const canGoNext = () => {
-    return true;
-  };
-
-  const handleNext = () => {
-    if (currentStep < 5) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onComplete();
-      Toast.show({ content: '训练计划已生成！', duration: 2000 });
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const getNextLabel = () => {
-    if (currentStep < 5) return '下一步';
-    return '完成';
-  };
+  }
 
   return (
-    <div style={contentStyle}>
-      {renderStepIndicator()}
-      {renderStep()}
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          marginTop: 24,
-          paddingBottom: 16,
-        }}
-      >
-        {currentStep > 1 && (
-          <Button
-            fill="none"
-            style={{ flex: 1, color: '#666', borderColor: '#D0D0D0' }}
-            onClick={handlePrev}
-          >
-            <ArrowLeftOutlined /> 上一步
+    <Popup visible bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88vh', overflow: 'auto', padding: '24px 16px 32px' }}>
+      {step !== 3 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <Button fill="none" onClick={step === 1 ? onClose : () => setStep(step - 1)} style={{ color: C.textSec }}>
+            {step === 1 ? '取消' : <LeftOutlined />}
           </Button>
-        )}
-        <Button
-          color="primary"
-          fill="solid"
-          style={{
-            flex: 1,
-            backgroundColor: ORANGE,
-            borderColor: ORANGE,
-          }}
-          onClick={handleNext}
-          disabled={!canGoNext()}
-        >
-          {getNextLabel()} {currentStep < 5 && <ArrowRightOutlined />}
-        </Button>
-      </div>
-    </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[1, 2, 3, 4, 5].map(s => <div key={s} style={{ width: step >= s ? 24 : 6, height: 6, borderRadius: 3, background: step >= s ? C.primary : C.border, transition: 'all 0.2s' }} />)}
+          </div>
+          <div style={{ width: 40 }} />
+        </div>
+      )}
+
+      {step === 1 && (
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8, textAlign: 'center' }}>上传跑步数据</h2>
+          <p style={{ fontSize: 13, color: C.textSec, textAlign: 'center', marginBottom: 24 }}>支持 Keep、咕咚、悦跑圈、Nike Run Club 等主流跑步 App 截图</p>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, flexDirection: 'column', gap: 8, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
+              onClick={nextStep}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</Button>
+            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, flexDirection: 'column', gap: 8, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
+              onClick={nextStep}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</Button>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {[1, 2].map(n => (
+              <div key={n} style={{ flex: 1, aspectRatio: '4/3', borderRadius: 12, background: '#F5F5F5', border: '1.5px dashed #E0E0E0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <PictureOutlined style={{ fontSize: 24, color: C.textTer }} />
+                <span style={{ fontSize: 10, color: C.textTer }}>跑步截图{n}.jpg</span>
+              </div>
+            ))}
+          </div>
+          <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
+            onClick={nextStep}>开始识别</Button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8, textAlign: 'center' }}>识别结果确认</h2>
+          <p style={{ fontSize: 12, color: C.textSec, textAlign: 'center', marginBottom: 20 }}>请检查并修正识别结果</p>
+          {[{ label: '最近5K成绩', value: "25'30\"" }, { label: '平均配速', value: "5'06\" /km" }, { label: '平均心率', value: '152 bpm' }, { label: '月跑量', value: '85 km' }, { label: '跑步年限', value: '1.5 年' }].map(f => (
+            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <label style={{ fontSize: 13, color: C.textSec, minWidth: 90 }}>{f.label}</label>
+              <Input defaultValue={f.value} style={{ flex: 1, borderRadius: 10 } as any} />
+              <EditOutlined style={{ fontSize: 14, color: C.textTer }} />
+            </div>
+          ))}
+          <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600, marginTop: 8 }}
+            onClick={nextStep}>确认并分析</Button>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8, textAlign: 'center' }}>你的能力画像</h2>
+          <div style={{ textAlign: 'center', marginBottom: 16 }}><RadarChart data={DEFAULT_ASSESSMENT} size={160} /></div>
+          <p style={{ fontSize: 13, color: C.text, lineHeight: 1.7, textAlign: 'center', marginBottom: 20 }}>{DEFAULT_ASSESSMENT.summary}</p>
+          <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
+            onClick={nextStep}>生成训练计划</Button>
+          <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: C.textSec, cursor: 'pointer' }} onClick={onFinish}>稍后再说</div>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 20, textAlign: 'center' }}>训练偏好设置</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>训练模式</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button fill={mode === 'race' ? 'solid' : 'outline'} block style={{ flex: 1, borderRadius: 12, background: mode === 'race' ? `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})` : undefined, borderColor: C.border, color: mode === 'race' ? '#fff' : C.textSec }}
+                  onClick={() => setMode('race')}><TrophyOutlined style={{ marginRight: 4 }} /> 备赛</Button>
+                <Button fill={mode === 'improve' ? 'solid' : 'outline'} block style={{ flex: 1, borderRadius: 12, background: mode === 'improve' ? `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})` : undefined, borderColor: C.border, color: mode === 'improve' ? '#fff' : C.textSec }}
+                  onClick={() => setMode('improve')}><RiseOutlined style={{ marginRight: 4 }} /> 日常提升</Button>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>目标距离</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {DISTANCE_OPTIONS.map(d => (
+                  <Button key={d} fill={d === goalDist ? 'solid' : 'outline'} size="small" block
+                    style={{ borderRadius: 10, background: d === goalDist ? C.primary : undefined, borderColor: d === goalDist ? C.primary : C.border, color: d === goalDist ? '#fff' : C.textSec }}
+                    onClick={() => setGoalDist(d)}>{d}</Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>期望完赛时间</label>
+              <Input value={goalTime} onChange={v => setGoalTime(v)} style={{ textAlign: 'center', fontSize: 15, borderRadius: 10 } as any} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>每周训练天数</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                <Button size="small" fill="outline" style={{ borderRadius: '50%', width: 32, height: 32, borderColor: C.border }} onClick={() => setWeeklyDays(w => Math.max(1, w - 1))}>−</Button>
+                <span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{weeklyDays}</span>
+                <Button size="small" fill="outline" style={{ borderRadius: '50%', width: 32, height: 32, borderColor: C.border }} onClick={() => setWeeklyDays(w => Math.min(7, w + 1))}>+</Button>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>训练强度</label>
+              <Slider value={intensity} onChange={v => setIntensity(v as number)} style={{ '--fill-color': C.primary } as React.CSSProperties} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.textTer }}><span>保守</span><span>激进</span></div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8, display: 'block' }}>休息日偏好</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {DAY_NAMES.map((d, i) => (
+                  <Button key={d} fill={restDays.includes(i) ? 'solid' : 'outline'} size="small" block
+                    style={{ borderRadius: 10, background: restDays.includes(i) ? C.primary : undefined, borderColor: restDays.includes(i) ? C.primary : C.border, color: restDays.includes(i) ? '#fff' : C.textSec }}
+                    onClick={() => toggleRestDay(i)}>{d}</Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600, marginTop: 24 }}
+            onClick={onFinish}><StarOutlined style={{ marginRight: 6 }} /> 生成我的专属计划</Button>
+        </div>
+      )}
+    </Popup>
   );
 };
 

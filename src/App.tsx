@@ -1,147 +1,67 @@
 import React, { useState } from 'react';
-import { TabBar, Popup } from 'antd-mobile';
-import {
-  HomeOutlined,
-  CalendarOutlined,
-  SnippetsOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { TabBar } from 'antd-mobile';
+import { HomeOutlined, CalendarOutlined, SnippetsOutlined, UserOutlined } from '@ant-design/icons';
 import HomePage from './pages/HomePage';
 import PlanPage from './pages/PlanPage';
 import RecordsPage from './pages/RecordsPage';
 import ProfilePage from './pages/ProfilePage';
 import OnboardingFlow from './pages/OnboardingFlow';
-import { useTrainingStore } from './stores/trainingStore';
 
-const ORANGE = '#FF6B35';
-
-const tabs = [
-  { key: 'home', title: '首页', icon: <HomeOutlined /> },
-  { key: 'plan', title: '计划', icon: <CalendarOutlined /> },
-  { key: 'records', title: '记录', icon: <SnippetsOutlined /> },
-  { key: 'profile', title: '我的', icon: <UserOutlined /> },
-];
-
-const appContainerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100vh',
-  backgroundColor: '#FAFAFA',
-};
-
-const contentStyle: React.CSSProperties = {
-  flex: 1,
-  overflowY: 'auto',
-};
-
-const tabBarStyle: React.CSSProperties = {
-  borderTop: '1px solid #F0F0F0',
-  backgroundColor: '#fff',
-};
-
-const tabBarIconStyle = (active: boolean): React.CSSProperties => ({
-  fontSize: 22,
-  color: active ? ORANGE : '#999',
-});
-
-const onboardingOverlayStyle: React.CSSProperties = {
-  backgroundColor: '#fff',
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  maxHeight: '90vh',
-  overflow: 'hidden',
+const C = {
+  primary: '#FF6B35', primaryLight: '#FFF0E8',
+  text: '#3C2218', textSec: '#8B7355', textTer: '#C4A882',
+  surface: '#FFFFFF', tabInactive: '#C4A882',
 };
 
 const App: React.FC = () => {
-  const hasData = useTrainingStore((s) => s.hasData);
-  const setHasData = useTrainingStore((s) => s.setHasData);
+  const [activeTab, setActiveTab] = useState('home');
+  const [hasData, setHasData] = useState(false);
+  const [onboarding, setOnboarding] = useState({ show: false, step: 1 });
 
-  const [activeTab, setActiveTab] = useState<string>('home');
-  const [onboardingVisible, setOnboardingVisible] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1);
+  const tabs = [
+    { key: 'home', title: '首页', icon: (active: boolean) => <HomeOutlined style={{ fontSize: 24, color: active ? C.primary : C.tabInactive }} /> },
+    { key: 'plan', title: '计划', icon: (active: boolean) => <CalendarOutlined style={{ fontSize: 24, color: active ? C.primary : C.tabInactive }} /> },
+    { key: 'records', title: '记录', icon: (active: boolean) => <SnippetsOutlined style={{ fontSize: 24, color: active ? C.primary : C.tabInactive }} /> },
+    { key: 'profile', title: '我的', icon: (active: boolean) => <UserOutlined style={{ fontSize: 24, color: active ? C.primary : C.tabInactive }} /> },
+  ];
 
-  const handleStartOnboarding = () => {
-    setOnboardingStep(1);
-    setOnboardingVisible(true);
-  };
+  const startOnboarding = (step = 1) => setOnboarding({ show: true, step });
+  const closeOnboarding = () => setOnboarding({ show: false, step: 1 });
+  const finishOnboarding = () => { setHasData(true); setOnboarding({ show: false, step: 1 }); setActiveTab('plan'); };
 
-  const handleOnboardingComplete = () => {
-    setOnboardingVisible(false);
-    setHasData(true);
-  };
-
-  const handleCloseOnboarding = () => {
-    setOnboardingVisible(false);
-  };
-
-
-  const renderPage = () => {
-    switch (activeTab) {
-      case 'home':
-        return (
-          <HomePage
-            hasData={hasData}
-            setHasData={setHasData}
-            onStartOnboarding={handleStartOnboarding}
-          />
-        );
-      case 'plan':
-        return <PlanPage />;
-      case 'records':
-        return <RecordsPage onStartOnboarding={handleStartOnboarding} />;
-      case 'profile':
-        return <ProfilePage onStartOnboarding={handleStartOnboarding} />;
-      default:
-        return null;
-    }
+  const tabSubtitles: Record<string, string> = {
+    home: '今日状态', plan: '备赛模式', records: '本月统计', profile: '设置与偏好',
   };
 
   return (
-    <div style={appContainerStyle}>
-      <div style={contentStyle}>
-        {renderPage()}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', maxWidth: 430, margin: '0 auto', background: '#FFF9F5' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 16px 4px', background: C.surface }}>
+        <div style={{ fontSize: 24, fontWeight: 700, color: C.text }}>跑步教练</div>
+        <div style={{ fontSize: 13, color: C.textSec }}>{tabSubtitles[activeTab]}</div>
       </div>
 
-      <TabBar
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        style={tabBarStyle}
-      >
-        {tabs.map((tab) => (
-          <TabBar.Item
-            key={tab.key}
-            icon={(active: boolean) => (
-              <span style={tabBarIconStyle(active)}>{tab.icon}</span>
-            )}
-            title={
-              <span
-                style={{
-                  fontSize: 11,
-                  color: activeTab === tab.key ? ORANGE : '#999',
-                }}
-              >
-                {tab.title}
-              </span>
-            }
-          />
-        ))}
-      </TabBar>
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {activeTab === 'home' && <HomePage hasData={hasData} setHasData={setHasData} onStartOnboarding={startOnboarding} onSwitchTab={setActiveTab} />}
+        {activeTab === 'plan' && <PlanPage />}
+        {activeTab === 'records' && <RecordsPage onStartOnboarding={() => startOnboarding(1)} />}
+        {activeTab === 'profile' && <ProfilePage onStartOnboarding={() => startOnboarding(5)} />}
+      </div>
 
-      {/* ── Onboarding Popup ── */}
-      <Popup
-        visible={onboardingVisible}
-        onMaskClick={handleCloseOnboarding}
-        position="bottom"
-        bodyStyle={onboardingOverlayStyle}
-        destroyOnClose
-      >
-        <OnboardingFlow
-          currentStep={onboardingStep}
-          setCurrentStep={setOnboardingStep}
-          onComplete={handleOnboardingComplete}
-          onClose={handleCloseOnboarding}
-        />
-      </Popup>
+      {/* Tab Bar */}
+      <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)', flexShrink: 0, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)' }}>
+        <TabBar activeKey={activeTab} onChange={setActiveTab} style={{} as any}>
+          {tabs.map(t => (
+            <TabBar.Item key={t.key} icon={t.icon(activeTab === t.key)} title={t.title} />
+          ))}
+        </TabBar>
+      </div>
+
+      {/* Onboarding Overlay */}
+      {onboarding.show && (
+        <OnboardingFlow step={onboarding.step} setStep={(s) => setOnboarding(o => ({ ...o, step: s }))} onClose={closeOnboarding} onFinish={finishOnboarding} />
+      )}
     </div>
   );
 };
