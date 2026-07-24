@@ -34,7 +34,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', maxWidth: 430, margin: '0 auto', background: '#FFF9F5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', maxWidth: 430, margin: '0 auto', background: '#FFF9F5', overflowX: 'hidden', boxSizing: 'border-box' }}>
       {/* Header */}
       <div style={{ padding: '16px 16px 4px', background: C.surface }}>
         <div style={{ fontSize: 24, fontWeight: 700, color: C.text }}>跑步教练</div>

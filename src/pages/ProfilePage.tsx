@@ -25,7 +25,7 @@ const ProfilePage: React.FC<Props> = ({ onStartOnboarding }) => {
   );
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16, boxSizing: 'border-box', overflowX: 'hidden', maxWidth: '100%' }}>
       <Card style={{ textAlign: 'center', marginBottom: 16, borderRadius: 16, padding: '20px 16px' }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontSize: 28, color: '#fff', fontWeight: 700 }}>张</span>

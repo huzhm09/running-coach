@@ -30,7 +30,7 @@ const PlanPage: React.FC = () => {
   const totalWeeks = 12;
 
   return (
-    <div style={{ padding: 16, paddingBottom: 8 }}>
+    <div style={{ padding: 16, paddingBottom: 8, boxSizing: 'border-box', overflowX: 'hidden', maxWidth: '100%' }}>
       {currentWeek === 3 && (
         <div style={{ background: C.primaryLight, borderRadius: 16, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: C.text, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.5 }}>
           ↻ 根据你上周的训练完成情况，本周三的间歇跑已降低一组。

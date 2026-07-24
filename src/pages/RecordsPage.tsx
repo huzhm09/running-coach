@@ -24,7 +24,7 @@ const RecordsPage: React.FC<Props> = ({ onStartOnboarding }) => {
   const statusBgs: Record<string, string> = { green: C.greenBg, yellow: C.yellowBg, red: C.redBg };
 
   return (
-    <div style={{ padding: 16, paddingBottom: 60 }}>
+    <div style={{ padding: 16, paddingBottom: 60, boxSizing: 'border-box', overflowX: 'hidden', maxWidth: '100%' }}>
       <div style={{ display: 'flex', marginBottom: 14, background: C.borderLight, borderRadius: 10, padding: 3 }}>
         <button style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: view === 'list' ? 600 : 500, background: view === 'list' ? C.surface : 'transparent', color: view === 'list' ? C.text : C.textSec, fontFamily: 'inherit' }}
           onClick={() => setView('list')}><UnorderedListOutlined style={{ marginRight: 4 }} />列表</button>
