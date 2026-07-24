@@ -74,9 +74,6 @@ const App: React.FC = () => {
     setOnboardingVisible(false);
   };
 
-  const handleSwitchTab = (tab: string) => {
-    setActiveTab(tab);
-  };
 
   const renderPage = () => {
     switch (activeTab) {
@@ -86,7 +83,6 @@ const App: React.FC = () => {
             hasData={hasData}
             setHasData={setHasData}
             onStartOnboarding={handleStartOnboarding}
-            onSwitchTab={handleSwitchTab}
           />
         );
       case 'plan':
