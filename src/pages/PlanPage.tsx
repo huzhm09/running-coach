@@ -104,9 +104,9 @@ const PlanPage: React.FC = () => {
 
               {isExpanded && (
                 <div style={{ padding: '14px', borderTop: `0.5px solid ${C.borderLight}`, background: C.warmBg }}>
-                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: C.textTer, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>训练目标</div>
-                    <p style={{ fontSize: 13, color: C.textSec, lineHeight: 1.6, margin: 0, maxWidth: 280, marginInline: 'auto' }}>{purposeText[day.type]}</p>
+                    <p style={{ fontSize: 13, color: C.textSec, lineHeight: 1.6, margin: 0 }}>{purposeText[day.type]}</p>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 16 }}>

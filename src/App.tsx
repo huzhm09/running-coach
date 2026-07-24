@@ -29,20 +29,11 @@ const App: React.FC = () => {
   const closeOnboarding = () => setOnboarding({ show: false, step: 1 });
   const finishOnboarding = () => { setHasData(true); setOnboarding({ show: false, step: 1 }); setActiveTab('plan'); };
 
-  const tabSubtitles: Record<string, string> = {
-    home: '今日状态', plan: '备赛模式', records: '本月统计', profile: '设置与偏好',
-  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', maxWidth: 430, margin: '0 auto', background: '#FFF9F5', overflowX: 'hidden', boxSizing: 'border-box' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 16px 4px', background: C.surface }}>
-        <div style={{ fontSize: 24, fontWeight: 700, color: C.text }}>跑步教练</div>
-        <div style={{ fontSize: 13, color: C.textSec }}>{tabSubtitles[activeTab]}</div>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', background: '#FFF9F5', overflowX: 'hidden', boxSizing: 'border-box' }}>
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'auto', paddingTop: 'env(safe-area-inset-top, 0px)', display: 'flex', flexDirection: 'column' }}>
         {activeTab === 'home' && <HomePage hasData={hasData} setHasData={setHasData} onStartOnboarding={startOnboarding} onSwitchTab={setActiveTab} />}
         {activeTab === 'plan' && <PlanPage />}
         {activeTab === 'records' && <RecordsPage onStartOnboarding={() => startOnboarding(1)} />}

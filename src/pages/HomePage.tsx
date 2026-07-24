@@ -37,8 +37,10 @@ const HomePage: React.FC<Props> = ({ hasData, setHasData, onStartOnboarding, onS
   // ── Empty State ──
   if (!hasData) {
     return (
-      <div style={{ ...S.page, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', gap:24 }}>
-        <AimOutlined style={{ fontSize:64, color:C.primary, opacity:0.6 }} />
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', gap:24, padding:'0 24px' }}>
+        <div style={{ width:88, height:88, borderRadius:'50%', background:`linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 20px rgba(255,107,53,0.3)' }}>
+  <UploadOutlined style={{ fontSize:36, color:'#fff' }} />
+</div>
         <div>
           <h2 style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8, margin:0 }}>让 AI 了解你的跑步能力</h2>
           <p style={{ fontSize:14, color:C.textSec, lineHeight:1.6, margin:0 }}>上传你的跑步数据，获得专属训练计划</p>
@@ -113,7 +115,7 @@ const HomePage: React.FC<Props> = ({ hasData, setHasData, onStartOnboarding, onS
         {/* Detail body */}
         <div style={{ padding:'14px 16px', background:'#FFF9F5' }}>
           {/* Purpose */}
-          <div style={{ textAlign:'center', marginBottom:14 }}>
+          <div style={{ marginBottom:14 }}>
             <div style={{ fontSize:10, fontWeight:600, color:C.textTer, textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>训练目标</div>
             <p style={{ fontSize:12, color:C.textSec, lineHeight:1.6, margin:0 }}>{purposeText[today.type] || '完成今日训练计划'}</p>
           </div>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Popup, Input, Slider } from 'antd-mobile';
-import { CameraOutlined, PictureOutlined, LeftOutlined, EditOutlined, StarOutlined, TrophyOutlined, RiseOutlined } from '@ant-design/icons';
+import { CameraOutlined, PictureOutlined, LeftOutlined, EditOutlined, StarOutlined, TrophyOutlined, RiseOutlined, CloseOutlined } from '@ant-design/icons';
 import RadarChart from '../components/RadarChart';
 import { DEFAULT_ASSESSMENT, DISTANCE_OPTIONS } from '../stores/trainingStore';
 
@@ -25,9 +25,64 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
   const [goalTime, setGoalTime] = useState('2:00:00');
   const [weeklyDays, setWeeklyDays] = useState(4);
   const [intensity, setIntensity] = useState(50);
-  const [restDays, setRestDays] = useState<number[]>([1, 3, 5]); // 二四六
+  const [restDays, setRestDays] = useState<number[]>([1, 3, 5]);
+  const [images, setImages] = useState<string[]>([]); // base64 data URLs
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (step === 3) { const t = setTimeout(() => setStep(4), 3000); return () => clearTimeout(t); } }, [step]);
+
+  // Convert file to base64 data URL
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Pick from gallery (APK uses Capacitor, browser falls back to file input)
+  const pickFromGallery = async () => {
+    try {
+      const { Camera } = await import('@capacitor/camera');
+      const result = await Camera.pickImages({ limit: 5, quality: 80 });
+      if (result.photos?.length) {
+        const newImages = result.photos.map(p => `data:image/jpeg;base64,${(p as any).dataUrl || p.webPath}`).slice(0, 5);
+        setImages(prev => [...prev, ...newImages].slice(0, 5));
+        return;
+      }
+    } catch {}
+    fileInputRef.current?.click();
+  };
+
+  // Take photo (APK uses Capacitor, browser falls back to file input)
+  const takePhoto = async () => {
+    try {
+      const { Camera, CameraResultType } = await import('@capacitor/camera');
+      const result = await Camera.getPhoto({ quality: 80, resultType: CameraResultType.DataUrl });
+      if ((result as any).dataUrl) {
+        setImages(prev => [...prev, (result as any).dataUrl].slice(0, 5));
+        return;
+      }
+    } catch {}
+    fileInputRef.current?.click();
+  };
+
+  // Browser file input handler
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newImages: string[] = [];
+    for (let i = 0; i < Math.min(files.length, 5); i++) {
+      const base64 = await fileToBase64(files[i]);
+      newImages.push(base64);
+    }
+    setImages(prev => [...prev, ...newImages].slice(0, 5));
+    e.target.value = '';
+  };
+
+  const removeImage = (idx: number) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const nextStep = () => setStep(step + 1);
 
@@ -70,19 +125,46 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
           <p style={{ fontSize: 13, color: C.textSec, textAlign: 'center', marginBottom: 24 }}>支持 Keep、咕咚、悦跑圈、Nike Run Club 等主流跑步 App 截图</p>
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
             <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={nextStep}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</div></Button>
+              onClick={takePhoto}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</div></Button>
             <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={nextStep}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</div></Button>
+              onClick={pickFromGallery}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</div></Button>
           </div>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            {[1, 2].map(n => (
-              <div key={n} style={{ flex: 1, aspectRatio: '4/3', borderRadius: 12, background: '#F5F5F5', border: '1.5px dashed #E0E0E0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <PictureOutlined style={{ fontSize: 24, color: C.textTer }} />
-                <span style={{ fontSize: 10, color: C.textTer }}>跑步截图{n}.jpg</span>
-              </div>
-            ))}
-          </div>
-          <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileInput} style={{ display: 'none' }} />
+
+          {/* Image thumbnails */}
+          {images.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+              {images.map((img, i) => (
+                <div key={i} style={{ position:'relative', width: 80, height: 80, borderRadius: 10, overflow: 'hidden', border: '1.5px solid #E0E0E0' }}>
+                  <img src={img} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  <div onClick={() => removeImage(i)} style={{ position:'absolute', top:2, right:2, width:20, height:20, borderRadius:'50%', background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                    <CloseOutlined style={{ fontSize:10, color:'#fff' }} />
+                  </div>
+                </div>
+              ))}
+              {images.length < 5 && (
+                <div onClick={pickFromGallery} style={{ width: 80, height: 80, borderRadius: 10, border: '1.5px dashed #E0E0E0', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                  <PictureOutlined style={{ fontSize: 20, color: C.textTer }} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Empty placeholder when no images */}
+          {images.length === 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {[1, 2].map(n => (
+                <div key={n} onClick={pickFromGallery} style={{ flex: 1, aspectRatio: '4/3', borderRadius: 12, background: '#F5F5F5', border: '1.5px dashed #E0E0E0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                  <PictureOutlined style={{ fontSize: 24, color: C.textTer }} />
+                  <span style={{ fontSize: 10, color: C.textTer }}>点击添加截图</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Button color="primary" fill="solid" block size="large"
+            disabled={images.length === 0}
+            style={{ background: images.length === 0 ? '#E0E0E0' : `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
             onClick={nextStep}>开始识别</Button>
         </div>
       )}
