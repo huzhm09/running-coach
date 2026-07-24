@@ -83,16 +83,16 @@ const PlanPage: React.FC = () => {
               border: `${isExpanded ? 1.5 : 0.5}px solid ${isExpanded ? C.primaryLight : 'rgba(0,0,0,0.04)'}`,
               transition: 'border 0.2s',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', cursor: 'pointer' }}
+              <div style={{ display: 'flex', alignItems: 'center', padding: '16px', cursor: 'pointer' }}
                 onClick={() => setExpandedDay(isExpanded ? null : i)}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36, marginRight: 10 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{DAY_LABELS[i]}</span>
-                  <span style={{ fontSize: 10, color: C.textTer, marginTop: 1 }}>7/{22 + i}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 40, marginRight: 12 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{DAY_LABELS[i]}</span>
+                  <span style={{ fontSize: 11, color: C.textTer, marginTop: 2 }}>7/{22 + i}</span>
                 </div>
-                <span style={{ fontSize: 20, marginRight: 10, color: t.color }}>{iconNode[t.icon] || <AimOutlined />}</span>
+                <span style={{ fontSize: 24, marginRight: 12, color: t.color }}>{iconNode[t.icon] || <AimOutlined />}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{t.label}</div>
-                  {day.distance > 0 && <div style={{ fontSize: 11, color: C.textSec, marginTop: 1 }}>{day.distance}km · {day.duration}min</div>}
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{t.label}</div>
+                  {day.distance > 0 && <div style={{ fontSize: 13, color: C.textSec, marginTop: 3 }}>{day.distance}km · {day.duration}min</div>}
                 </div>
                 {day.completed && (
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}>
@@ -133,7 +133,7 @@ const PlanPage: React.FC = () => {
                       </div>
                       <div style={{ flex: 1, paddingBottom: day.cooldown ? 12 : 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 6 }}>主课</div>
-                        <div style={{ background: C.surface, borderRadius: 10, padding: '12px 14px', border: `0.5px solid ${C.borderLight}` }}>
+                        <div style={{ background: C.surface, borderRadius: 10, padding: '16px', border: `0.5px solid ${C.borderLight}` }}>
                           <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, fontWeight: 500 }}>{day.main}</div>
                           {day.distance > 0 && (
                             <div style={{ display: 'flex', gap: 12, marginTop: 10, paddingTop: 10, borderTop: `0.5px solid ${C.borderLight}` }}>

@@ -40,16 +40,16 @@ const RecordsPage: React.FC<Props> = ({ onStartOnboarding }) => {
             const isExpanded = expandedRecord === i;
             return (
               <div key={i} style={{ background: C.surface, borderRadius: 16, padding: 0, overflow: 'hidden', borderLeft: `3px solid ${statusColors[rec.statusColor]}`, marginBottom: 8, boxShadow: '0 1px 3px rgba(60,34,24,0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', cursor: 'pointer' }}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '16px', cursor: 'pointer' }}
                   onClick={() => setExpandedRecord(isExpanded ? null : i)}>
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 40, marginRight: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{rec.date}</span>
-                    <span style={{ fontSize: 10, color: C.textTer }}>{rec.day}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 44, marginRight: 10 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{rec.date}</span>
+                    <span style={{ fontSize: 11, color: C.textTer, marginTop: 2 }}>{rec.day}</span>
                   </div>
-                  <span style={{ fontSize: 18, marginRight: 8, color: t.color }}>{iconNode[t.icon] || <AimOutlined />}</span>
+                  <span style={{ fontSize: 22, marginRight: 10, color: t.color }}>{iconNode[t.icon] || <AimOutlined />}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.label}</div>
-                    {rec.distance > 0 ? <div style={{ fontSize: 11, color: C.textSec, marginTop: 2 }}>{rec.distance}km · {rec.pace} · {rec.duration}min</div> : <div style={{ fontSize: 11, color: C.textTer, marginTop: 2 }}>—</div>}
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{t.label}</div>
+                    {rec.distance > 0 ? <div style={{ fontSize: 12, color: C.textSec, marginTop: 3 }}>{rec.distance}km · {rec.pace} · {rec.duration}min</div> : <div style={{ fontSize: 12, color: C.textTer, marginTop: 3 }}>—</div>}
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusBgs[rec.statusColor], color: statusColors[rec.statusColor], whiteSpace: 'nowrap' }}>{rec.statusLabel}</span>
                   <RightOutlined style={{ fontSize: 16, color: C.textTer, marginLeft: 4, transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }} />
