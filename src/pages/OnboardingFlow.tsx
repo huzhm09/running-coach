@@ -51,7 +51,7 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
   }
 
   return (
-    <Popup visible bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88vh', overflow: 'auto', padding: '24px 16px 32px' }}>
+    <Popup visible bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '88vh', overflow: 'hidden auto', padding: '24px 16px 32px', width: '100%', boxSizing: 'border-box' }}>
       {step !== 3 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <Button fill="none" onClick={step === 1 ? onClose : () => setStep(step - 1)} style={{ color: C.textSec }}>
@@ -69,10 +69,10 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
           <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8, textAlign: 'center' }}>上传跑步数据</h2>
           <p style={{ fontSize: 13, color: C.textSec, textAlign: 'center', marginBottom: 24 }}>支持 Keep、咕咚、悦跑圈、Nike Run Club 等主流跑步 App 截图</p>
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, flexDirection: 'column', gap: 8, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={nextStep}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</Button>
-            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, flexDirection: 'column', gap: 8, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={nextStep}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</Button>
+            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
+              onClick={nextStep}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</div></Button>
+            <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
+              onClick={nextStep}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</div></Button>
           </div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
             {[1, 2].map(n => (
@@ -92,10 +92,10 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
           <h2 style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8, textAlign: 'center' }}>识别结果确认</h2>
           <p style={{ fontSize: 12, color: C.textSec, textAlign: 'center', marginBottom: 20 }}>请检查并修正识别结果</p>
           {[{ label: '最近5K成绩', value: "25'30\"" }, { label: '平均配速', value: "5'06\" /km" }, { label: '平均心率', value: '152 bpm' }, { label: '月跑量', value: '85 km' }, { label: '跑步年限', value: '1.5 年' }].map(f => (
-            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <label style={{ fontSize: 13, color: C.textSec, minWidth: 90 }}>{f.label}</label>
-              <Input defaultValue={f.value} style={{ flex: 1, borderRadius: 10 } as any} />
-              <EditOutlined style={{ fontSize: 14, color: C.textTer }} />
+            <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, overflow:'hidden' }}>
+              <label style={{ fontSize: 12, color: C.textSec, flexShrink:0, width:75 }}>{f.label}</label>
+              <Input defaultValue={f.value} style={{ flex: 1, borderRadius: 10, minWidth:0 } as any} />
+              <EditOutlined style={{ fontSize: 14, color: C.textTer, flexShrink:0 }} />
             </div>
           ))}
           <Button color="primary" fill="solid" block size="large" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600, marginTop: 8 }}

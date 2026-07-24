@@ -65,7 +65,7 @@ const ProfilePage: React.FC<Props> = ({ onStartOnboarding }) => {
       </Card>
 
       {/* Edit Profile Popup */}
-      <Popup visible={showEdit} onClose={() => setShowEdit(false)} bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: '20px 16px' }}>
+      <Popup visible={showEdit} onClose={() => setShowEdit(false)} bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: '20px 16px', width:'100%', boxSizing:'border-box', overflow:'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: C.text, margin: 0 }}>编辑资料</h3>
           <CloseOutlined style={{ fontSize: 20, color: C.textTer, cursor: 'pointer' }} onClick={() => setShowEdit(false)} />
@@ -81,7 +81,7 @@ const ProfilePage: React.FC<Props> = ({ onStartOnboarding }) => {
       </Popup>
 
       {/* History Popup */}
-      <Popup visible={showHistory} onClose={() => setShowHistory(false)} bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: '20px 16px' }}>
+      <Popup visible={showHistory} onClose={() => setShowHistory(false)} bodyStyle={{ borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: '20px 16px', width:'100%', boxSizing:'border-box', overflow:'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700, color: C.text, margin: 0 }}>历史目标</h3>
           <CloseOutlined style={{ fontSize: 20, color: C.textTer, cursor: 'pointer' }} onClick={() => setShowHistory(false)} />
