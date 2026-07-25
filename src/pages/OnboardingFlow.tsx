@@ -27,6 +27,7 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
   const [intensity, setIntensity] = useState(50);
   const [restDays, setRestDays] = useState<number[]>([1, 3, 5]);
   const [images, setImages] = useState<string[]>([]); // base64 data URLs
+  const [showPicker, setShowPicker] = useState(false); // custom action sheet
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (step === 3) { const t = setTimeout(() => setStep(4), 3000); return () => clearTimeout(t); } }, [step]);
@@ -40,8 +41,9 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
     });
   };
 
-  // Pick from gallery (APK uses Capacitor, browser falls back to file input)
-  const pickFromGallery = async () => {
+  // Actually pick from gallery via Capacitor or file input
+  const doPickFromGallery = async () => {
+    setShowPicker(false);
     try {
       const { Camera } = await import('@capacitor/camera');
       const result = await Camera.pickImages({ limit: 5, quality: 80 });
@@ -54,8 +56,9 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
     fileInputRef.current?.click();
   };
 
-  // Take photo (APK uses Capacitor, browser falls back to file input)
-  const takePhoto = async () => {
+  // Actually take photo via Capacitor or file input
+  const doTakePhoto = async () => {
+    setShowPicker(false);
     try {
       const { Camera, CameraResultType } = await import('@capacitor/camera');
       const result = await Camera.getPhoto({ quality: 80, resultType: CameraResultType.DataUrl });
@@ -125,9 +128,9 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
           <p style={{ fontSize: 13, color: C.textSec, textAlign: 'center', marginBottom: 24 }}>支持 Keep、咕咚、悦跑圈、Nike Run Club 等主流跑步 App 截图</p>
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
             <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={takePhoto}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</div></Button>
+              onClick={() => setShowPicker(true)}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><CameraOutlined style={{ fontSize: 28, color: C.primary }} />拍照</div></Button>
             <Button fill="outline" block style={{ flex: 1, height: 80, borderRadius: 16, fontSize: 14, fontWeight: 600, color: C.text, borderColor: C.border }}
-              onClick={pickFromGallery}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</div></Button>
+              onClick={() => setShowPicker(true)}><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}><PictureOutlined style={{ fontSize: 28, color: C.primary }} />从相册选择</div></Button>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileInput} style={{ display: 'none' }} />
 
@@ -143,7 +146,7 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
                 </div>
               ))}
               {images.length < 5 && (
-                <div onClick={pickFromGallery} style={{ width: 80, height: 80, borderRadius: 10, border: '1.5px dashed #E0E0E0', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <div onClick={() => setShowPicker(true)} style={{ width: 80, height: 80, borderRadius: 10, border: '1.5px dashed #E0E0E0', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
                   <PictureOutlined style={{ fontSize: 20, color: C.textTer }} />
                 </div>
               )}
@@ -154,7 +157,7 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
           {images.length === 0 && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
               {[1, 2].map(n => (
-                <div key={n} onClick={pickFromGallery} style={{ flex: 1, aspectRatio: '4/3', borderRadius: 12, background: '#F5F5F5', border: '1.5px dashed #E0E0E0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                <div key={n} onClick={() => setShowPicker(true)} style={{ flex: 1, aspectRatio: '4/3', borderRadius: 12, background: '#F5F5F5', border: '1.5px dashed #E0E0E0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
                   <PictureOutlined style={{ fontSize: 24, color: C.textTer }} />
                   <span style={{ fontSize: 10, color: C.textTer }}>点击添加截图</span>
                 </div>
@@ -162,10 +165,28 @@ const OnboardingFlow: React.FC<Props> = ({ step, setStep, onClose, onFinish }) =
             </div>
           )}
 
-          <Button color="primary" fill="solid" block size="large"
-            disabled={images.length === 0}
-            style={{ background: images.length === 0 ? '#E0E0E0' : `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
-            onClick={nextStep}>开始识别</Button>
+          {images.length > 0 && (
+            <Button color="primary" fill="solid" block size="large"
+              style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.primaryHover})`, border: 'none', borderRadius: 12, fontWeight: 600 }}
+              onClick={nextStep}>开始识别 ({images.length}张)</Button>
+          )}
+
+          {/* Custom action sheet — Chinese, no native dialog */}
+          {showPicker && (
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:9999, display:'flex', alignItems:'flex-end', justifyContent:'center' }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowPicker(false); }}>
+              <div style={{ background:'#fff', borderRadius:'16px 16px 0 0', width:'100%', maxWidth:430, padding:'8px 16px 24px', animation:'slideUp 0.2s ease' }}>
+                <div style={{ width:36, height:4, borderRadius:2, background:'#E0E0E0', margin:'8px auto 16px' }} />
+                <button onClick={doTakePhoto} style={{ width:'100%', padding:'16px', border:'none', background:'#FFF9F5', borderRadius:12, fontSize:17, fontWeight:600, color:'#333', display:'flex', alignItems:'center', gap:12, marginBottom:8, cursor:'pointer', fontFamily:'inherit' }}>
+                  <CameraOutlined style={{ fontSize:24, color:C.primary }} /> 拍照
+                </button>
+                <button onClick={doPickFromGallery} style={{ width:'100%', padding:'16px', border:'none', background:'#FFF9F5', borderRadius:12, fontSize:17, fontWeight:600, color:'#333', display:'flex', alignItems:'center', gap:12, marginBottom:8, cursor:'pointer', fontFamily:'inherit' }}>
+                  <PictureOutlined style={{ fontSize:24, color:C.primary }} /> 从手机相册选择
+                </button>
+                <button onClick={() => setShowPicker(false)} style={{ width:'100%', padding:'14px', border:'none', background:'#F5F5F5', borderRadius:12, fontSize:16, color:'#999', cursor:'pointer', fontFamily:'inherit', marginTop:4 }}>取消</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
